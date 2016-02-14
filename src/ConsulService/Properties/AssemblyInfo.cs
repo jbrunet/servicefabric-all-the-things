@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("ServiceFabric.SubProcesses")]
+[assembly: AssemblyTitle("ConsulService")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("ServiceFabric.SubProcesses")]
+[assembly: AssemblyProduct("ConsulService")]
 [assembly: AssemblyCopyright("Copyright ©  2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("5c37b176-7502-4dab-a87d-a66d79cf312c")]
+[assembly: Guid("e690c364-f220-48f9-95b2-c9e2d83e16b9")]
 
 // Version information for an assembly consists of the following four values:
 //

@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Fabric;
 using System.Threading;
 using System.Diagnostics;
 using Microsoft.ServiceFabric.Services.Runtime;
 using Microsoft.ServiceFabric.Services.Communication.Runtime;
-using System.Collections.Generic;
 
 namespace ServiceFabric.OutOfProcess
 {
@@ -21,13 +19,11 @@ namespace ServiceFabric.OutOfProcess
 
         private readonly object _lock = new object();
         private Process _process;
-        private readonly IProcessServiceEventSource _eventSource;
-        private readonly string[] _endpointNames;
+        private readonly Func<IProcessServiceEventSource> _getEventSource;
 
-        protected ProcessService(IProcessServiceEventSource eventSource, params string[] endpointNames)
+        protected ProcessService(Func<IProcessServiceEventSource> getEventSource)
         {
-            _eventSource = eventSource;
-            _endpointNames = endpointNames;
+            _getEventSource = getEventSource;
         }
 
         protected override async Task OnOpenAsync(IStatelessServicePartition partition, CancellationToken cancellationToken)
@@ -47,6 +43,7 @@ namespace ServiceFabric.OutOfProcess
                     process.StartInfo.RedirectStandardOutput = true;
                     process.StartInfo.RedirectStandardError = true;
                     await ConfigureAsync(process.StartInfo, cancellationToken);
+                    _getEventSource().Message($"{process.StartInfo.FileName} {process.StartInfo.Arguments}");
                     if (!process.Start())
                         throw new Exception("could not start process");
                     process.BeginOutputReadLine();
@@ -79,9 +76,9 @@ namespace ServiceFabric.OutOfProcess
             base.OnAbort();
         }
 
-        protected override IEnumerable<ServiceInstanceListener> CreateServiceInstanceListeners()
+        protected ServiceInstanceListener Listen(string endpointName)
         {
-            return _endpointNames.Select(endpointName => new ServiceInstanceListener(initializationParameters => new ProcessCommunicationListener(endpointName)));
+            return new ServiceInstanceListener(initializationParameters => new ProcessCommunicationListener(endpointName));
         }
 
         private void StopProcess(ref Process process)
@@ -108,7 +105,7 @@ namespace ServiceFabric.OutOfProcess
         private void _process_OutputDataReceived(object sender, DataReceivedEventArgs e)
         {
             Console.WriteLine(e.Data);
-            _eventSource.Message(e.Data);
+            _getEventSource().Message(e.Data);
         }
     }
 }

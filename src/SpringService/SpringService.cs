@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using System.Fabric;
 using System.Diagnostics;
 using ServiceFabric.OutOfProcess;
+using Microsoft.ServiceFabric.Services.Communication.Runtime;
+using System.Collections.Generic;
 
 namespace SpringService
 {
@@ -15,7 +17,7 @@ namespace SpringService
         const string HttpEndpoint = "Http";
 
         public SpringService()
-            : base(ServiceEventSource.Current, HttpEndpoint)
+            : base(()=>ServiceEventSource.Current)
         {
         }
 
@@ -34,7 +36,12 @@ namespace SpringService
                 throw new Exception("Expects <Section Name='Java'> <Parameter Name='Jar' Value='xx.jar'/>");
 
             psi.FileName = javaPath;
-            psi.Arguments = string.Format("-Dserver.port={0} -jar {1}", endpoint.Port, jar);
+            psi.Arguments = $"-Dserver.port={endpoint.Port} -jar {jar}";
+        }
+
+        protected override IEnumerable<ServiceInstanceListener> CreateServiceInstanceListeners()
+        {
+            yield return Listen(HttpEndpoint);
         }
     }
 }
