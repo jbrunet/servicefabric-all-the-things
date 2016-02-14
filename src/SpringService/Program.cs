@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Diagnostics;
 using System.Fabric;
-using System.Linq;
 using System.Threading;
 
 namespace SpringService
@@ -19,10 +17,6 @@ namespace SpringService
                 // Creating a FabricRuntime connects this host process to the Service Fabric runtime.
                 using (FabricRuntime fabricRuntime = FabricRuntime.Create())
                 {
-                    foreach(DictionaryEntry env in Environment.GetEnvironmentVariables())
-                    {
-                        ServiceEventSource.Current.Message("{0}: {1}", env.Key, env.Value);
-                    }
                     // The ServiceManifest.XML file defines one or more service type names.
                     // RegisterServiceType maps a service type name to a .NET class.
                     // When Service Fabric creates an instance of this service type,

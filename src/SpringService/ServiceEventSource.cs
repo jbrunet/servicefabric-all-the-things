@@ -1,4 +1,5 @@
 ﻿using Microsoft.ServiceFabric.Services.Runtime;
+using ServiceFabric.OutOfProcess;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 namespace SpringService
 {
     [EventSource(Name = "MyCompany-App-SpringService")]
-    internal sealed class ServiceEventSource : EventSource
+    internal sealed class ServiceEventSource : EventSource, IProcessServiceEventSource
     {
         public static readonly ServiceEventSource Current = new ServiceEventSource();
 
