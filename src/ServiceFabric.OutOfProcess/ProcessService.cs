@@ -15,70 +15,67 @@ namespace ServiceFabric.OutOfProcess
 
     public abstract class ProcessService : StatelessServiceBase
     {
-        protected abstract Task ConfigureAsync(ProcessStartInfo psi, CancellationToken cancellationToken);
+        protected abstract Task ConfigureProcessAsync(ProcessStartInfo psi, CancellationToken cancellationToken);
 
-        private readonly object _lock = new object();
-        private Process _process;
-        private readonly Func<IProcessServiceEventSource> _getEventSource;
+        protected Process process;
+        protected readonly IProcessServiceEventSource eventSource;
 
-        protected ProcessService(Func<IProcessServiceEventSource> getEventSource)
+        protected ProcessService(IProcessServiceEventSource eventSource)
         {
-            _getEventSource = getEventSource;
+            this.eventSource = eventSource;
         }
+
+        protected virtual bool StartProcessOnOpenAsync { get { return true; } }
 
         protected override async Task OnOpenAsync(IStatelessServicePartition partition, CancellationToken cancellationToken)
         {
-            Monitor.Enter(_lock);
-            try
-            {
-                StopProcess(ref _process);
-                var process = new Process();
-                try
-                {
-                    process.OutputDataReceived += _process_OutputDataReceived;
-                    process.Exited += _process_Exited;
-                    process.EnableRaisingEvents = true;
-                    process.StartInfo.UseShellExecute = false;
-                    process.StartInfo.RedirectStandardInput = true;
-                    process.StartInfo.RedirectStandardOutput = true;
-                    process.StartInfo.RedirectStandardError = true;
-                    await ConfigureAsync(process.StartInfo, cancellationToken);
-                    _getEventSource().Message($"{process.StartInfo.FileName} {process.StartInfo.Arguments}");
-                    if (!process.Start())
-                        throw new Exception("could not start process");
-                    process.BeginOutputReadLine();
-                }
-                catch
-                {
-                    StopProcess(ref process);
-                    throw;
-                }
-                _process = process;
-            }
-            finally
-            {
-                Monitor.Exit(_lock);
-            }
+            if (StartProcessOnOpenAsync)
+                await StartProcessAsync(cancellationToken);
             await base.OnOpenAsync(partition, cancellationToken);
         }
 
         protected override Task OnCloseAsync(CancellationToken cancellationToken)
         {
-            lock (_lock)
-                StopProcess(ref _process);
+            StopProcess(ref process);
             return base.OnCloseAsync(cancellationToken);
         }
 
         protected override void OnAbort()
         {
-            lock (_lock)
-                StopProcess(ref _process);
+            StopProcess(ref process);
             base.OnAbort();
         }
 
         protected ServiceInstanceListener Listen(string endpointName)
         {
             return new ServiceInstanceListener(initializationParameters => new ProcessCommunicationListener(endpointName));
+        }
+
+        protected async Task StartProcessAsync(CancellationToken cancellationToken)
+        {
+            StopProcess(ref this.process);
+            var process = new Process();
+            try
+            {
+                process.OutputDataReceived += _process_OutputDataReceived;
+                process.Exited += _process_Exited;
+                process.EnableRaisingEvents = true;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.RedirectStandardInput = true;
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.RedirectStandardError = true;
+                await ConfigureProcessAsync(process.StartInfo, cancellationToken);
+                eventSource.Message($"{process.StartInfo.FileName} {process.StartInfo.Arguments}");
+                if (!process.Start())
+                    throw new Exception("could not start process");
+                process.BeginOutputReadLine();
+            }
+            catch
+            {
+                StopProcess(ref process);
+                throw;
+            }
+            this.process = process;
         }
 
         private void StopProcess(ref Process process)
@@ -105,7 +102,7 @@ namespace ServiceFabric.OutOfProcess
         private void _process_OutputDataReceived(object sender, DataReceivedEventArgs e)
         {
             Console.WriteLine(e.Data);
-            _getEventSource().Message(e.Data);
+            eventSource.Message(e.Data);
         }
     }
 }

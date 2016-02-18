@@ -1,0 +1,9 @@
+{
+  "ports": {
+    "dns": -1,
+    "rpc": 7400,
+    "server": 7300,
+    "serf_lan": 7301,
+    "serf_wan": 7302
+  }
+}

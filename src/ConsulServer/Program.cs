@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Fabric;
 using System.Threading;
 
-namespace ConsulService
+namespace ConsulServer
 {
     internal static class Program
     {
@@ -21,14 +21,11 @@ namespace ConsulService
                     // RegisterServiceType maps a service type name to a .NET class.
                     // When Service Fabric creates an instance of this service type,
                     // an instance of the class is created in this host process.
+                    fabricRuntime.RegisterServiceType("ConsulServerType", typeof(ConsulServer));
 
-                    fabricRuntime.RegisterServiceType("ConsulAgent", typeof(ConsulAgentService));
-                    fabricRuntime.RegisterServiceType("ConsulServer", typeof(ConsulServerService));
+                    ServiceEventSource.Current.ServiceTypeRegistered(Process.GetCurrentProcess().Id, typeof(ConsulServer).Name);
 
-                    ServiceEventSource.Current.ServiceTypeRegistered(Process.GetCurrentProcess().Id, typeof(ConsulAgentService).Name);
-                    ServiceEventSource.Current.ServiceTypeRegistered(Process.GetCurrentProcess().Id, typeof(ConsulServerService).Name);
-
-                    Thread.Sleep(Timeout.Infinite);  // Prevents this host process from terminating so services keeps running.
+                    Thread.Sleep(Timeout.Infinite);  // Prevents this host process from terminating to keep the service host process running.
                 }
             }
             catch (Exception e)

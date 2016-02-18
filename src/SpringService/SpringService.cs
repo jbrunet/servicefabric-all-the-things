@@ -17,11 +17,11 @@ namespace SpringService
         const string HttpEndpoint = "Http";
 
         public SpringService()
-            : base(()=>ServiceEventSource.Current)
+            : base(ServiceEventSource.Current)
         {
         }
 
-        protected override async Task ConfigureAsync(ProcessStartInfo psi, CancellationToken cancellationToken)
+        protected override async Task ConfigureProcessAsync(ProcessStartInfo psi, CancellationToken cancellationToken)
         {
             var activationContext = await FabricRuntime.GetActivationContextAsync(Timeout.InfiniteTimeSpan, cancellationToken);
             var endpoint = activationContext.GetEndpoint(HttpEndpoint);
